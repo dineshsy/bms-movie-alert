@@ -20,7 +20,7 @@ end
 
 def tickets_live?
   response = HTTParty.get(BOOKMYSHOW_URL, follow_redirects: true)
-  doc = Nokogiri::HTML(response.body)
+  doc = Nokogiri::HTML5(response.body)
 
   # find all date blocks
   date_blocks = doc.css("div.sc-h5edv-0")
