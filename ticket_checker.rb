@@ -1,12 +1,11 @@
-# gem install nokogiri httparty mail
-require 'httparty'
-require 'nokogiri'
+require 'playwright'
 require 'mail'
 
+# 🎯 Config
 BOOKMYSHOW_URL = "https://in.bookmyshow.com/cinemas/hyderabad/pvr-nexus-mall-kukatpally-hyderabad/buytickets/PVFS/20250904"
-TARGET_DAY     = "04"
-TARGET_MONTH   = "Sep"
+TARGET_DATE    = ENV['TARGET_DATE'] || "04 Sep"   # can override via env
 
+# 📧 Gmail SMTP config
 Mail.defaults do
   delivery_method :smtp, {
     address: "smtp.gmail.com",
@@ -18,62 +17,42 @@ Mail.defaults do
   }
 end
 
-def tickets_live?
-response = HTTParty.get(
-  BOOKMYSHOW_URL,
-  headers: {
-    "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "\
-                    "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-    "Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language" => "en-US,en;q=0.9",
-    "Connection" => "keep-alive"
-  }
-)
-  p response
-  doc = Nokogiri::HTML5(response.body)
- p doc
-  # find all date blocks
-  date_blocks = doc.css("div.sc-h5edv-0")
-  p date_blocks
-  target_block = date_blocks.find do |div|
-    day   = div.at_css("span.sc-h5edv-2")&.text&.strip
-    month = div.at_css("span.sc-h5edv-3")&.text&.strip
-    day == TARGET_DAY && month == TARGET_MONTH
-  end
-
-  if target_block.nil?
-    puts "⚠️ Could not find target date #{TARGET_DAY} #{TARGET_MONTH}"
-    return false
-  end
-
-  # detect if it's disabled (look for "disabled" in parent div or class)
-  if target_block["class"]&.include?("disabled") ||
-     target_block.ancestors.any? { |a| a["class"].to_s.include?("disabled") }
-    puts "ℹ️ Date #{TARGET_DAY} #{TARGET_MONTH} found but still disabled"
-    return false
-  end
-
-  # if the movie title exists → tickets are live
-  if doc.text.match(/Conjuring.*Last Rites/i)
-    return true
-  else
-    puts "ℹ️ Date #{TARGET_DAY} #{TARGET_MONTH} active but movie not listed yet"
-    return false
-  end
-end
-
 def send_alert
   Mail.deliver do
-    to ENV['GMAIL_USER']
+    to ENV['GMAIL_USER']   # <-- replace with your email
     from ENV['GMAIL_USER']
     subject "🎟️ Tickets LIVE at PVR Nexus Mall Kukatpally 4DX!"
-    body "The Conjuring: Last Rites tickets for #{TARGET_DAY} #{TARGET_MONTH} are live. Book now: #{BOOKMYSHOW_URL}"
+    body "The Conjuring: Last Rites tickets just went live for #{TARGET_DATE}. Book now: #{BOOKMYSHOW_URL}"
   end
 end
 
+def tickets_live?
+  Playwright.create(playwright_cli_executable_path: `which npx`.strip) do |playwright|
+    browser = playwright.chromium.launch(headless: true)
+    page = browser.new_page
+    page.goto(BOOKMYSHOW_URL)
+
+    # Wait until at least one date block is visible
+    page.wait_for_selector('div.sc-h5edv-0', timeout: 15000)
+
+    # Extract all dates
+    dates = page.query_selector_all('div.sc-h5edv-0').map do |el|
+      el.inner_text.gsub("\n", " ").strip
+    end
+
+    puts "👉 Found dates: #{dates.inspect}"
+
+    browser.close
+
+    # Return true if target date is available
+    dates.any? { |d| d.include?(TARGET_DATE) }
+  end
+end
+
+# 🚀 Run check
 if tickets_live?
-  puts "✅ Tickets are live!"
+  puts "✅ Tickets for #{TARGET_DATE} are live!"
   send_alert
 else
-  puts "❌ Not yet..."
+  puts "❌ Tickets not yet available for #{TARGET_DATE}..."
 end
