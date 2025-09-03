@@ -1,5 +1,4 @@
 source "https://rubygems.org"
 
-gem "httparty"
-gem "nokogiri"
+gem "playwright-ruby-client"
 gem "mail"
