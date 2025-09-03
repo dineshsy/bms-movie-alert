@@ -25,4 +25,4 @@ jobs:
         env:
           GMAIL_USER: ${{ vars.GMAIL_USER }}
           GMAIL_PASS: ${{ vars.GMAIL_PASS }}
-        run: ruby gmail_test.rb
+        run: ruby ticket_checker.rb
