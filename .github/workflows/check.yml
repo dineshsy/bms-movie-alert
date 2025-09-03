@@ -23,6 +23,6 @@ jobs:
 
       - name: Run ticket checker
         env:
-          GMAIL_USER: ${{ vars.GMAIL_USER }}
-          GMAIL_PASS: ${{ vars.GMAIL_PASS }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
         run: ruby gmail_test.rb
