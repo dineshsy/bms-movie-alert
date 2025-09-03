@@ -24,7 +24,7 @@ def tickets_live?
 
   # find all date blocks
   date_blocks = doc.css("div.sc-h5edv-0")
-
+  p date_blocks
   target_block = date_blocks.find do |div|
     day   = div.at_css("span.sc-h5edv-2")&.text&.strip
     month = div.at_css("span.sc-h5edv-3")&.text&.strip
