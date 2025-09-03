@@ -1,5 +1,6 @@
 require 'mail'
-
+p ENV['GMAIL_USER']
+p ENV['GMAIL_PASS']
 Mail.defaults do
   delivery_method :smtp, {
     address: "smtp.gmail.com",
