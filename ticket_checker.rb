@@ -3,8 +3,8 @@ require 'httparty'
 require 'nokogiri'
 require 'mail'
 
-BOOKMYSHOW_URL = "https://in.bookmyshow.com/cinemas/hyderabad/pvr-nexus-mall-kukatpally-hyderabad/buytickets/PVFS/20250905"
-TARGET_DAY     = "05"
+BOOKMYSHOW_URL = "https://in.bookmyshow.com/cinemas/hyderabad/pvr-nexus-mall-kukatpally-hyderabad/buytickets/PVFS/20250904"
+TARGET_DAY     = "04"
 TARGET_MONTH   = "Sep"
 
 Mail.defaults do
